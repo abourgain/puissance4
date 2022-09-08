@@ -2,6 +2,7 @@ import argparse
 
 from player import HumanPlayer, RandomPlayer
 from ui_game import UIGame
+from ai_player import AIPlayer
 
 
 if __name__ == '__main__':
@@ -12,7 +13,7 @@ if __name__ == '__main__':
 
     player1 = RandomPlayer()
     player1.name = args.p1
-    player2 = HumanPlayer()
+    player2 = AIPlayer()
     player2.name = args.p2
 
     game = UIGame(player1, player2)
