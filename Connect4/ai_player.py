@@ -12,7 +12,7 @@ class AIPlayer(Player):
 	
     def __init__(self):
         self.name = "SirADN"
-        self.depth = 1 # profondeur maximale au-delà de la laquelle on évaluera l'utilité avec une heuristique
+        self.depth = 2 # profondeur maximale au-delà de la laquelle on évaluera l'utilité avec une heuristique
         self.width = 7
         self.height = 6
         self.winning_length = 4
@@ -21,7 +21,6 @@ class AIPlayer(Player):
     def getColumn(self, board):
          # TODO(student): implement this!
         action = self.getActionAlphaBeta(board)
-        print(self.color)
         return action
 
     #**********************************#
@@ -62,6 +61,8 @@ class AIPlayer(Player):
                 return -np.inf
         # sinon on calcule l'heuristique
 
+        roles = ('ai', 'ad')
+
         # on calcule le nombre de pions tout seul de chaque joueur, pondérés par leur endroit sur la grille 
         ones = {'ai': 0, 'ad': 0}
         for col in range(self.width): 
@@ -76,65 +77,62 @@ class AIPlayer(Player):
         
         heur_ones = ones['ai'] - ones['ad']         
 
-        patterns = {str(self.color): {'col': [], 'row': [], 'diag': []}, str(-self.color): {'col': [], 'row': [], 'diag': []}}
+        patterns = {'ai': {'col': [], 'row': [], 'diag': []}, 'ad': {'col': [], 'row': [], 'diag': []}}
 
         # **************************************************************** 
         # Colonnes
         # Motifs intéressant dans les colonnes 
-        patterns[str(self.color)]['col'] = [(2, '1100'), (3, '1110')]
-        patterns[str(-self.color)]['col'] = [(2, '-1-100'), (3, '-1-1-10')]
+        if self.color == 1: 
+            patterns['ai']['col'] = [(2, '1100'), (3, '1110')]
+            patterns['ad']['col'] = [(2, '-1-100'), (3, '-1-1-10')]
+        elif self.color == -1:
+            patterns['ad']['col'] = [(2, '1100'), (3, '1110')]
+            patterns['ai']['col'] = [(2, '-1-100'), (3, '-1-1-10')]
 
         # Traitement de ces motifs dans les colonnes 
-        cols = {str(self.color): 0, str(-self.color): 0}
+        cols = {'ai': 0, 'ad': 0}
         for col_num in range (self.width):
             col = board.getCol(col_num)
             char = ''
             for x in col : 
                 char += str(x)
-            for pattern in patterns[str(self.color)]['col']:
-                #print(f"char : {char}")
-                #print(f"pattern : {pattern[1]}")
-                if re.search(pattern[1], char) :
-                    cols[str(self.color)] += pattern[0]
-            for pattern in patterns[str(-self.color)]['col']:
-                #print(f"col : {col}")
-                #print(f"pattern : {pattern[1]}")
-                if re.search(pattern[1], char) :
-                    cols[str(-self.color)] += pattern[0]
+            for role in roles: 
+                for pattern in patterns[role]['col']:
+                    #print(f"char : {char}")
+                    #print(f"pattern : {pattern[1]}")
+                    if re.search(pattern[1], char) :
+                        cols[role] += pattern[0]
         # Calcul du nombre de patterns retrouvés 
-        heur_cols = cols[str(self.color)] - cols[str(-self.color)]
+        heur_cols = cols['ai'] - cols['ad']
 
         # **************************************************************** 
         # Rows 
         # Motifs intéressant dans les rows 
-        patterns[str(self.color)]['row'] = [(2, '1100'), (2, '1010'), (2, '1001'), (2, '0110'), (2, '0101'), (2, '0011'), (3, '1110'), (3, '1011'), (3, '1101'), (3, '0111')]
-        patterns[str(-self.color)]['row'] = [(2, '-1-100'), (2, '-10-10'), (2, '-100-1'), (2, '0-1-10'), (2, '0-10-1'), (2, '00-1-1'), (3, '-1-1-10'), (3, '-10-1-1'), (3, '-1-10-1'), (3, '0-1-1-1')]
-
+        if self.color == 1: 
+            patterns['ai']['row'] = [(2, '1100'), (2, '1010'), (2, '1001'), (2, '0110'), (2, '0101'), (2, '0011'), (3, '1110'), (3, '1011'), (3, '1101'), (3, '0111')]
+            patterns['ad']['row'] = [(2, '-1-100'), (2, '-10-10'), (2, '-100-1'), (2, '0-1-10'), (2, '0-10-1'), (2, '00-1-1'), (3, '-1-1-10'), (3, '-10-1-1'), (3, '-1-10-1'), (3, '0-1-1-1')]
+        elif self.color == -1: 
+            patterns['ad']['row'] = [(2, '1100'), (2, '1010'), (2, '1001'), (2, '0110'), (2, '0101'), (2, '0011'), (3, '1110'), (3, '1011'), (3, '1101'), (3, '0111')]
+            patterns['ai']['row'] = [(2, '-1-100'), (2, '-10-10'), (2, '-100-1'), (2, '0-1-10'), (2, '0-10-1'), (2, '00-1-1'), (3, '-1-1-10'), (3, '-10-1-1'), (3, '-1-10-1'), (3, '0-1-1-1')]
+        
         # Traitement de ces motifs dans les rows 
-        rows = {str(self.color): 0, str(-self.color): 0}
+        rows = {'ai': 0, 'ad': 0}
         for row_num in range (self.height):
             row = board.getRow(row_num)
             if 0 in row and row != [0, 0, 0, 0, 0, 0, 0]:
                 char = ''
                 for x in row : 
                     char += str(x)
-                for pattern in patterns[str(self.color)]['row']:
-                    print(f"char : {char}")
-                    print(f"pattern : {pattern[1]}")
-                    if re.search(pattern[1], char) :
-                        rows[str(self.color)] += pattern[0]
-                        print('ok')
-                for pattern in patterns[str(-self.color)]['row']:
-                    print(f"char : {char}")
-                    print(f"pattern : {pattern[1]}")
-                    if re.search(pattern[1], char) :
-                        rows[str(-self.color)] += pattern[0]
-                        print('ok')
+                for role in roles:
+                    for pattern in patterns[role]['row']:
+                        #print(f"char : {char}")
+                        #print(f"pattern : {pattern[1]}")
+                        if re.search(pattern[1], char) :
+                            rows[role] += pattern[0]
         # Calcul du nombre de patterns retrouvés 
-        heur_rows = rows[str(self.color)] - rows[str(-self.color)]
+        heur_rows = rows['ai'] - rows['ad']
 
         heur = heur_ones + heur_cols + heur_rows
-        heur = heur_ones 
         return heur
 
 
