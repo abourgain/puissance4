@@ -77,7 +77,7 @@ class AIPlayer(Player):
         
         heur_ones = ones['ai'] - ones['ad']         
 
-        patterns = {'ai': {'col': [], 'row': [], 'diag': []}, 'ad': {'col': [], 'row': [], 'diag': []}}
+        patterns = {'ai': {'col': [], 'row': [], 'diag_up': [], 'diag_down': []}, 'ad': {'col': [], 'row': [], 'diag_up': [], 'diag_down': []}}
 
         # **************************************************************** 
         # Colonnes
@@ -93,6 +93,7 @@ class AIPlayer(Player):
         cols = {'ai': 0, 'ad': 0}
         for col_num in range (self.width):
             col = board.getCol(col_num)
+            # on transforme les listes en chaîne de caractères pour faire de la recherche dedans après 
             char = ''
             for x in col : 
                 char += str(x)
@@ -120,6 +121,7 @@ class AIPlayer(Player):
         for row_num in range (self.height):
             row = board.getRow(row_num)
             if 0 in row and row != [0, 0, 0, 0, 0, 0, 0]:
+                # on transforme les listes en chaîne de caractères pour faire de la recherche dedans après 
                 char = ''
                 for x in row : 
                     char += str(x)
@@ -132,7 +134,53 @@ class AIPlayer(Player):
         # Calcul du nombre de patterns retrouvés 
         heur_rows = rows['ai'] - rows['ad']
 
-        heur = heur_ones + heur_cols + heur_rows
+        # **************************************************************** 
+        # Diagonales 
+        # Motifs intéressant dans les diagonales  
+        if self.color == 1: 
+            patterns['ai']['diag_up'] = [(4, '1100'), (6, '1110')]
+            patterns['ad']['diag_up'] = [(4, '-1-100'), (6, '-1-1-10')]
+        elif self.color == -1: 
+            patterns['ad']['diag_up'] = [(4, '1100'), (6, '1110')]
+            patterns['ai']['diag_up'] = [(4, '-1-100'), (6, '-1-1-10')]
+
+        if self.color == 1: 
+            patterns['ai']['diag_down'] = [(4, '0011'), (6, '0111')]
+            patterns['ad']['diag_down'] = [(4, '00-1-1'), (6, '0-1-1-1')]
+        elif self.color == -1: 
+            patterns['ad']['diag_down'] = [(4, '0011'), (6, '0111')]
+            patterns['ai']['diag_down'] = [(4, '00-1-1'), (6, '0-1-1-1')]
+        
+        # Traitement de ces motifs dans les diagonales
+        diags_name = ('diag_up', 'diag_down') 
+        diags_up = {'ai': 0, 'ad': 0}
+        diags_down = {'ai': 0, 'ad': 0}
+        diags = {'diag_up' : diags_up, 'diag_down' : diags_down}
+        print(board)
+        for diag_num in range (self.width):
+            diag_up = board.getDiagonal(True, diag_num)
+            diag_down = board.getDiagonal(False, diag_num)
+            #print(f"diag_up : {diag_up}")
+            #print(f"diag_down : {diag_down}")
+
+            # on transforme les listes en chaîne de caractères pour faire de la recherche dedans après 
+            char = {'diag_up' : '', 'diag_down': ''}
+            for x in diag_up : 
+                char['diag_up'] += str(x)
+            for x in diag_down : 
+                char['diag_down'] += str(x)
+
+            for role in roles: 
+                for diag_name in diags_name:
+                    for pattern in patterns[role][diag_name]:
+                        if re.search(pattern[1], char[diag_name]) :
+                            diags[diag_name][role] += pattern[0]
+        # Calcul du nombre de patterns retrouvés 
+        heur_diags = 0
+        for diag_name in diags_name :
+            heur_diags += diags[diag_name]['ai'] - diags[diag_name]['ad']
+
+        heur = heur_ones + heur_cols + heur_rows + heur_diags
         return heur
 
 
